@@ -1,3 +1,4 @@
+[Console]::OutputEncoding = New-Object System.Text.Utf8Encoding
 
 Function GetUnixTimeUTC([AllowNull()][Nullable[DateTime]] $ttt) {
     if (!$ttt) { return 0 }
@@ -145,6 +146,5 @@ $jobs_json.Add("job_restore_points_total",$NUMBER_OF_RESTORE_POINTS)
 
 $out_data_list += ($jobs_json)
 }
-
 
 $out_data_list| ConvertTo-Json -Depth 10 
