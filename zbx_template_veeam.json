@@ -1,0 +1,88 @@
+{
+    "zabbix_export": {
+        "version": "6.2",
+        "date": "2023-10-02T17:04:55Z",
+        "template_groups": [
+            {
+                "uuid": "7df96b18c230490a9a0a9e2307226338",
+                "name": "Templates"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "0c2f9300e01749889c835dde21d214cc",
+                "template": "Veeam Backup Replication",
+                "name": "Veeam Backup Replication",
+                "groups": [
+                    {
+                        "name": "Templates"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "611756f3d3d2444a82c079e78e6519ad",
+                        "name": "Veeam: Get attributes",
+                        "key": "veeam.get",
+                        "delay": "1h",
+                        "trends": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "Application",
+                                "value": "Veeam Backup"
+                            }
+                        ]
+                    }
+                ],
+                "discovery_rules": [
+                    {
+                        "uuid": "54f78a2d274447938a9c83a92417f5e7",
+                        "name": "Veeam discovery",
+                        "type": "DEPENDENT",
+                        "key": "veeam.discovery",
+                        "delay": "0",
+                        "lifetime": "1d",
+                        "item_prototypes": [
+                            {
+                                "uuid": "83471e96953d40c3952389bcf6048e32",
+                                "name": "Veeam: job result {#NAME}",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_result[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$..job_result"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "veeam.get"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#NAME}",
+                                "path": "$..job_name"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
