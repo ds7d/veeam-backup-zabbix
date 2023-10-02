@@ -1,5 +1,6 @@
 [Console]::OutputEncoding = New-Object System.Text.Utf8Encoding
 
+
 Function GetUnixTimeUTC([AllowNull()][Nullable[DateTime]] $ttt) {
     if (!$ttt) { return 0 }
     [int]$unixtime = (get-date -Date $ttt.ToUniversalTime() -UFormat %s).`
@@ -35,7 +36,8 @@ function GetNumberOfRestorePoints($JobObject) {
 
 $AgentJobs = Get-VBRComputerBackupJob
 
-$out_data_list = @()
+$out_data_json = @{}
+$jobs_list = New-Object System.Collections.ArrayList
 
 # FOR EVERY AGENT JOB GATHER BASIC INFO
 foreach ($Job in $AgentJobs)
@@ -129,10 +131,12 @@ foreach ($r in $RestorePoints) {
 
 $NUMBER_OF_RESTORE_POINTS = GetNumberOfRestorePoints $Job
 
+$jobs_list.Add(@{"name"=$JOB_NAME}) |Out-Null
+
 $jobs_json = @{}
 
 $jobs_json.Add("job_id",$JOB_ID)
-$jobs_json.Add("job_name",$JOB_NAME)
+#$jobs_json.Add("job_name",$JOB_NAME)
 $jobs_json.Add("job_description",$JOB_DESCRIPTION)
 $jobs_json.Add("job_enabled",$JOB_ENABLED)
 $jobs_json.Add("job_schedule",$JOB_SCHEDULE_ENABLED)
@@ -144,7 +148,14 @@ $jobs_json.Add("job_backup_size_bytes",$BACKUP_SIZE)
 $jobs_json.Add("job_restore_points_total",$NUMBER_OF_RESTORE_POINTS)
 
 
-$out_data_list += ($jobs_json)
+$out_data_json.Add($JOB_NAME,$jobs_json)
+$out_data_json_new = @{}
+$out_data_json_new.Add("job_info",$out_data_json)
 }
 
-$out_data_list| ConvertTo-Json -Depth 10 
+$out_data_json_new.Add("jobs",$jobs_list)
+
+$out_data_json = @{}
+$out_data_json.Add("data",$out_data_json_new)
+
+$out_data_json| ConvertTo-Json -Depth 10 
