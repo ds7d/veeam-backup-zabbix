@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-10-02T18:58:48Z",
+        "date": "2023-10-03T05:37:02Z",
         "template_groups": [
             {
                 "uuid": "7df96b18c230490a9a0a9e2307226338",
@@ -31,6 +31,34 @@
                                 "tag": "Application",
                                 "value": "Veeam Backup"
                             }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "26597db872e94fe28c5c056372a46460",
+                                "expression": "nodata(/Veeam Backup Replication/veeam.get,3h)=1",
+                                "name": "Veeam: No data check from script",
+                                "priority": "WARNING",
+                                "manual_close": "YES",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "9212971d474e4654a461e5346e5ef6ac",
+                                "expression": "mid(last(/Veeam Backup Replication/veeam.get),1,1)<>\"{\"\nand\nfind(/Veeam Backup Replication/veeam.get,,\"like\",\"data\")=0",
+                                "name": "Veeam: Wrong data check from script",
+                                "priority": "WARNING",
+                                "manual_close": "YES",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam"
+                                    }
+                                ]
+                            }
                         ]
                     }
                 ],
@@ -44,8 +72,157 @@
                         "lifetime": "1d",
                         "item_prototypes": [
                             {
+                                "uuid": "346c39e1ae6c440094bea5f356df104f",
+                                "name": "Veeam: job backup size [{#NAME}]",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_backup_size[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "units": "B",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.data.job_info[\"{#NAME}\"].job_backup_size_bytes"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "c52d27f5436044818320f52a6be1cbb1",
+                                "name": "Veeam: job data size [{#NAME}]",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_data_size[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "units": "B",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.data.job_info[\"{#NAME}\"].job_data_size_bytes"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "2c196b40ee054f6993b64c6ffa4d3167",
+                                "name": "Veeam: job enabled [{#NAME}]",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_enabled[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.data.job_info[\"{#NAME}\"].job_enabled"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "033d314dff49413b9e9eafecf78e35d0",
+                                "name": "Veeam: job end time [{#NAME}]",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_end_time_timestamp_seconds[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "units": "unixtime",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.data.job_info[\"{#NAME}\"].job_end_time_timestamp_seconds"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "507b6ec75aae44b6a04c8f8a75d20d4e",
+                                        "expression": "(last(/Veeam Backup Replication/veeam.job_end_time_timestamp_seconds[\"{#NAME}\"]) - now()) / 86400  > {$VEEAM.JOB.ENDTIME.NOUPDATE}",
+                                        "name": "Veeam end time has not been updated for a long time [{#NAME}]",
+                                        "priority": "AVERAGE",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Veeam"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "14f5aa582b324dfaae4160a08b931713",
+                                "name": "Veeam: job restore points total [{#NAME}]",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_restore_points_total[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.data.job_info[\"{#NAME}\"].job_restore_points_total"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ]
+                            },
+                            {
                                 "uuid": "83471e96953d40c3952389bcf6048e32",
-                                "name": "Veeam: job result {#NAME}",
+                                "name": "Veeam: job result [{#NAME}]",
                                 "type": "DEPENDENT",
                                 "key": "veeam.job_result[\"{#NAME}\"]",
                                 "delay": "0",
@@ -68,6 +245,107 @@
                                         "tag": "Application",
                                         "value": "Veeam Backup"
                                     }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "518bd6dd57b449589a90b3bc3bae2bf1",
+                                        "expression": "nodata(/Veeam Backup Replication/veeam.job_result[\"{#NAME}\"],{$VEEAM.JOB.RESULT.NODATA})=1",
+                                        "name": "Veeam state has not been updated for a long time [{#NAME}]",
+                                        "priority": "AVERAGE",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Veeam"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "bace66f4bbe647698d588ce2af25fdbf",
+                                "name": "Veeam: job schedule [{#NAME}]",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_schedule[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.data.job_info[\"{#NAME}\"].job_schedule"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "cdc4ca420bea417f98d016f76569f355",
+                                "name": "Veeam: job start time [{#NAME}]",
+                                "type": "DEPENDENT",
+                                "key": "veeam.job_start_time_timestamp_seconds[\"{#NAME}\"]",
+                                "delay": "0",
+                                "history": "3d",
+                                "trends": "0",
+                                "units": "unixtime",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.data.job_info[\"{#NAME}\"].job_start_time_timestamp_seconds"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "veeam.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam Backup"
+                                    }
+                                ]
+                            }
+                        ],
+                        "trigger_prototypes": [
+                            {
+                                "uuid": "5484769f14bf463d99065832ee1fac29",
+                                "expression": "last(/Veeam Backup Replication/veeam.job_result[\"{#NAME}\"])<>\"Success\"\nand\nlast(/Veeam Backup Replication/veeam.job_enabled[\"{#NAME}\"])=\"true\"",
+                                "name": "Veeam job was completed with errors [{#NAME}]",
+                                "priority": "AVERAGE",
+                                "description": "\u0412\u0441\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u0435 \u0442\u0430\u0441\u043a\u0438(\u043d\u0435 \u0437\u0430\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0435, \u043d\u0430\u043f\u0440\u0438\u043c\u0435\u0440)",
+                                "manual_close": "YES",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "6d1c0ead83454fc9a7e8e80f8e6aeba8",
+                                "expression": "last(/Veeam Backup Replication/veeam.job_enabled[\"{#NAME}\"])=\"true\"\nand\nlast(/Veeam Backup Replication/veeam.job_schedule[\"{#NAME}\"])=\"true\"\nand\nlast(/Veeam Backup Replication/veeam.job_result[\"{#NAME}\"])<>\"Success\"",
+                                "name": "Veeam schedule job was completed with errors [{#NAME}]",
+                                "status": "DISABLED",
+                                "discover": "NO_DISCOVER",
+                                "priority": "AVERAGE",
+                                "description": "\u0417\u0430\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0435 \u0437\u0430\u0434\u0430\u0447\u0438",
+                                "manual_close": "YES",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Veeam"
+                                    }
                                 ]
                             }
                         ],
@@ -88,6 +366,18 @@
                                 ]
                             }
                         ]
+                    }
+                ],
+                "macros": [
+                    {
+                        "macro": "{$VEEAM.JOB.ENDTIME.NOUPDATE}",
+                        "value": "8",
+                        "description": "\u0414\u043d\u0435\u0439 \u0441\u043a\u043e\u043b\u044c\u043a\u043e \u043d\u0435 \u043e\u0431\u043d\u043e\u0432\u043b\u044f\u043b\u043e\u0441\u044c \u0432\u0440\u0435\u043c\u044f \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0438\u044f job'\u044b(\u0447\u0438\u0441\u043b\u043e \u0431\u0435\u0437 d)"
+                    },
+                    {
+                        "macro": "{$VEEAM.JOB.RESULT.NODATA}",
+                        "value": "7d",
+                        "description": "\u0414\u043d\u0435\u0439 \u0441\u043a\u043e\u043b\u044c\u043a\u043e \u043d\u0435 \u043e\u0442\u0434\u0430\u0432\u0430\u043b\u0441\u044f \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 job'\u044b"
                     }
                 ]
             }
