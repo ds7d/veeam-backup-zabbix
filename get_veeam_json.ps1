@@ -17,8 +17,10 @@ function GetNumberOfRestorePoints($JobObject) {
         $Grouped = $RestorePoints | Group-Object -property {$_.NASServerName}
     } else {
         $Backup = Get-VBRBackup | ? {$_.JobId -eq $JobObject.Id}
-        $RestorePoints = Get-VBRRestorePoint -Backup $Backup
-        $Grouped = $RestorePoints | Group-Object -property {$_.Name}
+        if ($Backup -ne $null) {
+            $RestorePoints = Get-VBRRestorePoint -Backup $Backup -ErrorAction Stop
+            $Grouped = $RestorePoints | Group-Object -property {$_.Name}
+        }
     }
 
     $Sorted = $Grouped | Sort-Object -Property Count -Descending
@@ -53,9 +55,18 @@ if ($Job.Mode -eq 'ManagedByAgent') { $IsPolicy = $True }
 # https://forums.veeam.com/post434804.html
 $JobNameForQuery = $Job.Name
 if ($IsPolicy) { $JobNameForQuery = '{0}?*' -f $Job.Name }
-$Sessions = Get-VBRComputerBackupJobSession -Name $JobNameForQuery
-$LastSession = $Sessions[0]
-$LastSessionTasks = Get-VBRTaskSession -Session $LastSession
+try
+{
+    $Sessions = Get-VBRComputerBackupJobSession -Name $JobNameForQuery -ErrorAction Stop
+    $LastSession = $Sessions[0]
+    $LastSessionTasks = Get-VBRTaskSession -Session $LastSession
+}
+catch
+{
+    #Write-Output "Something threw an exception"
+    #Write-Output $_
+    $LastSessionTasks = $null
+}
 
 # --------------  AGENT JOB ID, NAME, TYPE  -------------------------
 
@@ -120,7 +131,17 @@ if ($Job.BackupType -eq 'SelectedFiles') {
 # --------------  GET AGENT JOB BACKUP SZE  -------------------------
 
 $AgentBackup = Get-VBRBackup -Name $Job.Name
-$RestorePoints = Get-VBRRestorePoint -Backup $AgentBackup
+try
+{
+    $RestorePoints = Get-VBRRestorePoint -Backup $AgentBackup -ErrorAction Stop
+}
+catch
+{
+    #Write-Output "Something threw an exception"
+    #Write-Output $_
+    $RestorePoints = $null
+}
+
 $BACKUP_SIZE = 0
 foreach ($r in $RestorePoints) {
     $Storage = $r.FindStorage()
